@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-gold: #c9a84c;
+  --color-brand-gold-light: #dfc06e;
+  --color-brand-dark: #0a0a0a;
+  --color-brand-darker: #050505;
+  --color-brand-card: #111111;
+  --color-brand-border: #1a1a1a;
+  --color-brand-text: #e0e0e0;
+  --color-brand-muted: #888888;
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: #050505;
+    color: #e0e0e0;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: #c9a84c;
+    color: #0a0a0a;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .gold-gradient {
+    background: linear-gradient(135deg, #c9a84c, #dfc06e, #c9a84c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(5,5,5,0.5) 0%,
+      rgba(5,5,5,0.2) 40%,
+      rgba(5,5,5,0.6) 70%,
+      rgba(5,5,5,0.95) 100%
+    );
+  }
+  .card-shine {
+    background: linear-gradient(
+      135deg,
+      rgba(201,168,76,0.03) 0%,
+      transparent 50%,
+      rgba(201,168,76,0.02) 100%
+    );
+  }
+  .glass {
+    background: rgba(17,17,17,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
