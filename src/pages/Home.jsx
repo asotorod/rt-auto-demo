@@ -1,19 +1,20 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Shield, Star, Banknote, CarFront, ArrowRight } from 'lucide-react';
+import { ChevronRight, Shield, Star, Banknote, CarFront, ArrowRight, Loader2 } from 'lucide-react';
 import VehicleCard from '../components/VehicleCard';
-import { vehicles } from '../data/inventory';
-
-const featured = vehicles.filter(v => v.featured).slice(0, 6);
+import { useFeaturedVehicles, useVehicles } from '../lib/useInventory';
 
 export default function Home() {
+  const { vehicles: featuredVehicles, loading: featuredLoading } = useFeaturedVehicles(6);
+  const { vehicles: allVehicles } = useVehicles();
+  const heroImage = allVehicles[0]?.image || 'https://cdn.dealrimages.com/RT-AUTO-CENTER_NEWARK_NJ/2019-LAMBORGHINI-URUS-ZPBUA1ZL4KLA01776/cc_2024_1-edit.webp';
   return (
     <div>
       {/* HERO */}
       <section className="relative h-[90vh] min-h-[600px] flex items-end overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={vehicles[0].image}
+            src={heroImage}
             alt="Featured vehicle"
             className="w-full h-full object-cover scale-105"
           />
@@ -47,7 +48,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="mt-12 grid grid-cols-3 gap-px max-w-lg">
-            {[{ value: '105+', label: 'Vehicles' }, { value: '10+', label: 'Years' }, { value: '69K', label: 'Followers' }].map(stat => (
+            {[{ value: `${allVehicles.length || '105'}+`, label: 'Vehicles' }, { value: '10+', label: 'Years' }, { value: '69K', label: 'Followers' }].map(stat => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl md:text-3xl font-display font-bold text-white">{stat.value}</div>
                 <div className="text-xs text-white/40 tracking-wider uppercase mt-1">{stat.label}</div>
@@ -73,7 +74,9 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featured.map((vehicle, i) => (<VehicleCard key={vehicle.id} vehicle={vehicle} index={i} />))}
+            {featuredLoading ? (
+              <div className="col-span-full flex justify-center py-12"><Loader2 size={32} className="animate-spin text-brand-gold" /></div>
+            ) : featuredVehicles.map((vehicle, i) => (<VehicleCard key={vehicle.id} vehicle={vehicle} index={i} />))}
           </div>
           <div className="mt-8 text-center md:hidden">
             <Link to="/inventory" className="inline-flex items-center gap-2 text-sm text-brand-gold">View All Inventory <ChevronRight size={16} /></Link>

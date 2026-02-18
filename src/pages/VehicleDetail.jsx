@@ -1,14 +1,23 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Gauge, Fuel, Settings2, Palette, Calendar, Hash, Check, Phone, Mail } from 'lucide-react';
-import { vehicles } from '../data/inventory';
+import { ArrowLeft, Gauge, Fuel, Settings2, Palette, Calendar, Hash, Check, Phone, Mail, Loader2 } from 'lucide-react';
+import { useVehicle, useVehicles } from '../lib/useInventory';
 import VehicleCard from '../components/VehicleCard';
 import { useState } from 'react';
 
 export default function VehicleDetail() {
   const { id } = useParams();
-  const vehicle = vehicles.find(v => v.id === parseInt(id));
+  const { vehicle, loading, error } = useVehicle(id);
+  const { vehicles: allVehicles } = useVehicles();
   const [formSent, setFormSent] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-darker flex items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-brand-gold" />
+      </div>
+    );
+  }
 
   if (!vehicle) {
     return (
@@ -21,7 +30,7 @@ export default function VehicleDetail() {
     );
   }
 
-  const similar = vehicles.filter(v => v.id !== vehicle.id && v.bodyType === vehicle.bodyType).slice(0, 3);
+  const similar = allVehicles.filter(v => v.id !== vehicle.id && v.bodyType === vehicle.bodyType).slice(0, 3);
   const specs = [
     { icon: Calendar, label: 'Year', value: vehicle.year },
     { icon: Gauge, label: 'Mileage', value: `${vehicle.mileage.toLocaleString()} mi` },

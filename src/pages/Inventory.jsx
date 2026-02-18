@@ -1,15 +1,20 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ChevronDown, Database, Loader2 } from 'lucide-react';
 import VehicleCard from '../components/VehicleCard';
-import { vehicles, makes, bodyTypes } from '../data/inventory';
+import { useVehicles } from '../lib/useInventory';
 
 export default function Inventory() {
+  const { vehicles, loading, source } = useVehicles();
   const [search, setSearch] = useState('');
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedBody, setSelectedBody] = useState('');
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Derive filter options from live data
+  const makes = useMemo(() => [...new Set(vehicles.map(v => v.make))].sort(), [vehicles]);
+  const bodyTypes = useMemo(() => [...new Set(vehicles.map(v => v.bodyType))].sort(), [vehicles]);
 
   const filtered = useMemo(() => {
     let result = [...vehicles];
@@ -26,7 +31,7 @@ export default function Inventory() {
       case 'mileage-low': return result.sort((a, b) => a.mileage - b.mileage);
       default: return result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     }
-  }, [search, selectedMake, selectedBody, sortBy]);
+  }, [vehicles, search, selectedMake, selectedBody, sortBy]);
 
   const activeFilters = [selectedMake, selectedBody].filter(Boolean).length;
 
@@ -40,7 +45,7 @@ export default function Inventory() {
               <span className="text-brand-gold text-xs font-bold tracking-[0.3em] uppercase">Our Collection</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-display font-bold text-white">Inventory</h1>
-            <p className="mt-3 text-brand-muted">{vehicles.length} vehicles available</p>
+            <p className="mt-3 text-brand-muted">{loading ? 'Loading...' : `${vehicles.length} vehicles available`}{source === 'supabase' && <span className="ml-2 text-xs text-brand-gold/60">● Live</span>}</p>
           </motion.div>
         </div>
       </div>
@@ -97,7 +102,11 @@ export default function Inventory() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={32} className="animate-spin text-brand-gold" />
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((vehicle, i) => (<VehicleCard key={vehicle.id} vehicle={vehicle} index={i} />))}
           </div>
