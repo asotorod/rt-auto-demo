@@ -1,23 +1,58 @@
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Shield, Star, Banknote, CarFront, ArrowRight, Loader2 } from 'lucide-react';
 import VehicleCard from '../components/VehicleCard';
 import { useFeaturedVehicles, useVehicles } from '../lib/useInventory';
 
+const HERO_INTERVAL = 6000; // 6 seconds per slide
+
 export default function Home() {
   const { vehicles: featuredVehicles, loading: featuredLoading } = useFeaturedVehicles(6);
   const { vehicles: allVehicles } = useVehicles();
-  const heroImage = allVehicles[0]?.image || 'https://cdn.dealrimages.com/RT-AUTO-CENTER_NEWARK_NJ/2019-LAMBORGHINI-URUS-ZPBUA1ZL4KLA01776/cc_2024_1-edit.webp';
+
+  // Build hero slides from vehicles that have images
+  const heroSlides = (allVehicles.length > 0 ? allVehicles : []).filter(v => v.image && !v.image.includes('placeholder')).slice(0, 6);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const nextSlide = useCallback(() => {
+    if (heroSlides.length > 1) {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    if (isPaused || heroSlides.length <= 1) return;
+    const timer = setInterval(nextSlide, HERO_INTERVAL);
+    return () => clearInterval(timer);
+  }, [isPaused, nextSlide, heroSlides.length]);
+
+  const currentVehicle = heroSlides[currentSlide] || null;
+  const heroImage = currentVehicle?.image || 'https://cdn.dealrimages.com/0R/GZ/WW/XJ58JQDKXSP8JP.jpg?w=900';
+
   return (
     <div>
       {/* HERO */}
-      <section className="relative h-[90vh] min-h-[600px] flex items-end overflow-hidden">
+      <section
+        className="relative h-[90vh] min-h-[600px] flex items-end overflow-hidden"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="Featured vehicle"
-            className="w-full h-full object-cover scale-105"
-          />
+          {/* Cycling background images with crossfade */}
+          <AnimatePresence mode="popLayout">
+            <motion.img
+              key={currentSlide}
+              src={heroImage}
+              alt={currentVehicle ? `${currentVehicle.year} ${currentVehicle.make} ${currentVehicle.model}` : 'Featured vehicle'}
+              className="absolute inset-0 w-full h-full object-cover scale-105"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2, ease: 'easeInOut' }}
+            />
+          </AnimatePresence>
           <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
         </div>
@@ -47,14 +82,43 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="mt-12 grid grid-cols-3 gap-px max-w-lg">
-            {[{ value: `${allVehicles.length || '105'}+`, label: 'Vehicles' }, { value: '10+', label: 'Years' }, { value: '69K', label: 'Followers' }].map(stat => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-display font-bold text-white">{stat.value}</div>
-                <div className="text-xs text-white/40 tracking-wider uppercase mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
+          {/* Stats + slide indicators */}
+          <div className="mt-12 flex items-end justify-between max-w-xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="grid grid-cols-3 gap-px max-w-lg flex-1">
+              {[{ value: `${allVehicles.length || '105'}+`, label: 'Vehicles' }, { value: '10+', label: 'Years' }, { value: '69K', label: 'Followers' }].map(stat => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-2xl md:text-3xl font-display font-bold text-white">{stat.value}</div>
+                  <div className="text-xs text-white/40 tracking-wider uppercase mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Slide progress indicators */}
+          {heroSlides.length > 1 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-6 flex items-center gap-2">
+              {heroSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
+                  style={{ width: i === currentSlide ? '2rem' : '0.75rem' }}
+                  aria-label={`Go to slide ${i + 1}`}
+                >
+                  <div className="absolute inset-0 bg-white/20 rounded-full" />
+                  {i === currentSlide && (
+                    <motion.div
+                      className="absolute inset-0 bg-brand-gold rounded-full origin-left"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: HERO_INTERVAL / 1000, ease: 'linear' }}
+                      key={`progress-${currentSlide}`}
+                    />
+                  )}
+                </button>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
